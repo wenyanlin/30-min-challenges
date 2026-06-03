@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 type Item = {
   id: string;
@@ -16,7 +16,7 @@ export function Day01TodoList() {
     return storeData ? (JSON.parse(storeData) as Item[]) : [];
   });
   const [tab, setTab] = useState<Tab>("all");
-  const [inputValue, setInputValue] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const updateListAndSave = (newList: Item[]) => {
     setList(newList);
@@ -25,16 +25,16 @@ export function Day01TodoList() {
 
   const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!inputValue.trim()) return;
+    if (!inputRef.current?.value.trim()) return;
 
     const newItem: Item = {
       id: crypto.randomUUID(),
-      text: inputValue.trim(),
+      text: inputRef.current.value.trim(),
       status: "active",
     };
 
     updateListAndSave([...list, newItem]);
-    setInputValue("");
+    inputRef.current.value = "";
   };
 
   const deleteItem = (id: string) => {
@@ -66,16 +66,7 @@ export function Day01TodoList() {
         gap: "1rem",
       }}
     >
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-        />
-        <button type="submit" disabled={!inputValue.trim()}>
-          新增
-        </button>
-      </form>
+      <FormSection onSubmit={handleSubmit} ref={inputRef} />
       <div style={{ display: "flex", gap: "1rem" }}>
         <button onClick={() => setTab("all")}>全部</button>
         <button onClick={() => setTab("active")}>進行中</button>
@@ -113,5 +104,27 @@ export function Day01TodoList() {
         </ul>
       </div>
     </div>
+  );
+}
+
+type FormSectionProps = {
+  ref: React.Ref<HTMLInputElement>;
+  onSubmit: React.SubmitEventHandler<HTMLFormElement>;
+};
+
+function FormSection({ ref, onSubmit }: FormSectionProps) {
+  const [inputValue, setInputValue] = useState("");
+  return (
+    <form onSubmit={onSubmit}>
+      <input
+        type="text"
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
+        ref={ref}
+      />
+      <button type="submit" disabled={!inputValue.trim()}>
+        新增
+      </button>
+    </form>
   );
 }
