@@ -12,19 +12,23 @@ export function useFetch<T>(url: string): UseFetchReturn<T> {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
+    if (!url) return;
+
+    const abortController = new AbortController();
+
     const load = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        const res = await fetch(url);
+        setData(null);
+        const res = await fetch(url, { signal: abortController.signal });
         const json = await res.json();
         if (!res.ok) throw new Error(json.message);
-        if (!cancelled) setData(json);
-      } catch (error) {
-        if (!cancelled) setError(error as Error);
+        setData(json);
+      } catch (error: unknown) {
+        setError(error as Error);
       } finally {
-        if (!cancelled) setIsLoading(false);
+        setIsLoading(false);
       }
     };
 
